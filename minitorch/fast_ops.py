@@ -219,7 +219,6 @@ def tensor_zip(
         b_shape: Shape,
         b_strides: Strides,
     ) -> None:
-        # TODO: Implement for Task 3.1.
         if (out_strides == a_strides and out_strides == b_strides) and (out_shape == a_shape and out_shape == b_shape):
             for i in prange(len(out)):
                 out[i] = fn(a_storage[i], b_storage[i])
@@ -274,11 +273,9 @@ def tensor_reduce(
         a_strides: Strides,
         reduce_dim: int,
     ) -> None:
-        # TODO: Implement for Task 3.1.
         out_index = np.zeros(len(out_shape), dtype=np.int32)
         reduce_size = a_shape[reduce_dim]
         
-        # Parallel loop over output positions
         for i in prange(len(out)):
             to_index(i, out_shape, out_index)
             o = index_to_position(out_index, out_strides)
@@ -286,8 +283,6 @@ def tensor_reduce(
                 out_index[reduce_dim] = j
                 a = index_to_position(out_index, a_strides)
                 out[o] = fn(out[o], a_storage[a])
-
-        #raise NotImplementedError("Need to implement for Task 3.1")
 
     return njit(_reduce, parallel=True)  # type: ignore
 
@@ -338,9 +333,19 @@ def _tensor_matrix_multiply(
     a_batch_stride = a_strides[0] if a_shape[0] > 1 else 0
     b_batch_stride = b_strides[0] if b_shape[0] > 1 else 0
 
-    # TODO: Implement for Task 3.2.
-    raise NotImplementedError("Need to implement for Task 3.2")
-
+    for i in prange(len(out)):
+        batch = i // (out_shape[-2] * out_shape[-1])
+        row = (i // out_shape[-1]) % out_shape[-2]
+        col = i % out_shape[-1]
+        
+        a_start = batch * a_batch_stride + row * a_strides[-2]
+        b_start = batch * b_batch_stride + col * b_strides[-1]
+        
+        total = 0.0
+        for j in range(a_shape[-1]):
+            total += a_storage[a_start + j * a_strides[-1]] * b_storage[b_start + j * b_strides[-2]]
+        
+        out[i] = total
 
 tensor_matrix_multiply = njit(_tensor_matrix_multiply, parallel=True)
 assert tensor_matrix_multiply is not None
