@@ -47,7 +47,10 @@ def index_to_position(index: Index, strides: Strides) -> int:
 
     """
     # TODO: Implement for Task 2.1.
-    position = sum(i * s for i, s in zip(index, strides))
+    #position = sum(i * s for i, s in zip(index, strides))
+    position = 0
+    for ind, stride in zip(index, strides):
+        position += ind * stride
     return position
 
 
@@ -66,11 +69,13 @@ def to_index(ordinal: int, shape: Shape, out_index: OutIndex) -> None:
 
     """
     # TODO: Implement for Task 2.1.
-    for i in reversed(range(len(shape))):
-        out_index[i] = (
-            ordinal % shape[i]
-        )  # Modulo gives the index in the current dimension
-        ordinal //= shape[i]
+    curr_ord = ordinal + 0
+    for i in range(len(shape) - 1, -1, -1):
+        sh = shape[i]
+        out_index[i] = int(curr_ord % shape[i])
+        #out_index[i] = (ordinal % shape[i])
+        #ordinal //= shape[i]
+        curr_ord = curr_ord // sh
 
 
 def broadcast_index(
@@ -98,7 +103,7 @@ def broadcast_index(
     # out_index[:] = 0
 
     # Calculate the number of dimensions for both shapes
-    big_dims = len(big_shape)
+    """big_dims = len(big_shape)
     small_dims = len(shape)
 
     # Iterate over the dimensions in reverse order
@@ -118,7 +123,13 @@ def broadcast_index(
         else:
             raise IndexingError(
                 f"Cannot broadcast index {big_index} from shape {big_shape} to {shape}."
-            )
+            )"""
+    
+    for i, s in enumerate(shape):
+        if s > 1:
+            out_index[i] = big_index[i + (len(big_shape) - len(shape))]
+        else:
+            out_index[i] = 0
     # raise NotImplementedError("Need to implement for Task 2.2")
 
 

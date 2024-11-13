@@ -28,7 +28,7 @@ print(treduce.parallel_diagnostics(level=3))
 
 
 # MM
-print("MATRIX MULTIPLY")
+"""print("MATRIX MULTIPLY")
 out, a, b = (
     minitorch.zeros((1, 10, 10)),
     minitorch.zeros((1, 10, 20)),
@@ -37,4 +37,4 @@ out, a, b = (
 tmm = minitorch.fast_ops.tensor_matrix_multiply
 
 tmm(*out.tuple(), *a.tuple(), *b.tuple())
-print(tmm.parallel_diagnostics(level=3))
+print(tmm.parallel_diagnostics(level=3))"""

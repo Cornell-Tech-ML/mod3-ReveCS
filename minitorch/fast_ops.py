@@ -168,8 +168,19 @@ def tensor_map(
         in_shape: Shape,
         in_strides: Strides,
     ) -> None:
-        # TODO: Implement for Task 3.1.
-        raise NotImplementedError("Need to implement for Task 3.1")
+        if out_strides == in_strides and out_shape == in_shape:
+            for i in prange(len(out)):
+                out[i] = fn(in_storage[i])
+            return
+        
+        out_index = np.zeros_like(out_shape)
+        in_index = np.zeros_like(in_shape)
+
+        for i in prange(len(out)):
+            to_index(i, out_shape, out_index)
+            broadcast_index(out_index, out_shape, in_shape, in_index)
+
+            out[i] = fn(in_storage[index_to_position(in_index, in_strides)])
 
     return njit(_map, parallel=True)  # type: ignore
 
@@ -209,7 +220,26 @@ def tensor_zip(
         b_strides: Strides,
     ) -> None:
         # TODO: Implement for Task 3.1.
-        raise NotImplementedError("Need to implement for Task 3.1")
+        if (out_strides == a_strides and out_strides == b_strides) and (out_shape == a_shape and out_shape == b_shape):
+            for i in prange(len(out)):
+                out[i] = fn(a_storage[i], b_storage[i])
+            return
+
+        out_index = np.zeros(len(out_shape), dtype=np.int32)
+        a_index = np.zeros(len(a_shape), dtype=np.int32)
+        b_index = np.zeros(len(b_shape), dtype=np.int32)
+
+        for i in prange(len(out)):
+            to_index(i, out_shape, out_index)
+
+            broadcast_index(out_index, out_shape, a_shape, a_index)
+            broadcast_index(out_index, out_shape, b_shape, b_index)
+
+            a_pos = index_to_position(a_index, a_strides)
+            b_pos = index_to_position(b_index, b_strides)
+            out_pos = index_to_position(out_index, out_strides)
+
+            out[out_pos] = fn(a_storage[a_pos], b_storage[b_pos])
 
     return njit(_zip, parallel=True)  # type: ignore
 
@@ -245,7 +275,19 @@ def tensor_reduce(
         reduce_dim: int,
     ) -> None:
         # TODO: Implement for Task 3.1.
-        raise NotImplementedError("Need to implement for Task 3.1")
+        out_index = np.zeros(len(out_shape), dtype=np.int32)
+        reduce_size = a_shape[reduce_dim]
+        
+        # Parallel loop over output positions
+        for i in prange(len(out)):
+            to_index(i, out_shape, out_index)
+            o = index_to_position(out_index, out_strides)
+            for j in range(reduce_size):
+                out_index[reduce_dim] = j
+                a = index_to_position(out_index, a_strides)
+                out[o] = fn(out[o], a_storage[a])
+
+        #raise NotImplementedError("Need to implement for Task 3.1")
 
     return njit(_reduce, parallel=True)  # type: ignore
 

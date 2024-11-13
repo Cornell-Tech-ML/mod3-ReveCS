@@ -378,16 +378,18 @@ def tensor_reduce(
         a_strides: Strides,
         reduce_dim: int,
     ) -> None:
-        out_index = np.zeros_like(out_shape)
-        a_index = np.zeros_like(a_shape)
+        out_index = np.zeros(len(out_shape), dtype=np.int32)
+        reduce_size = a_shape[reduce_dim]
+        
+        # Parallel loop over output positions
+        for i in range(len(out)):
+            to_index(i, out_shape, out_index)
+            o = index_to_position(out_index, out_strides)
+            for j in range(reduce_size):
+                out_index[reduce_dim] = j
+                a = index_to_position(out_index, a_strides)
+                out[o] = fn(out[o], a_storage[a])
 
-        for i in range(len(a_storage)):
-            to_index(i, a_shape, a_index)
-            broadcast_index(a_index, a_shape, out_shape, out_index)
-
-            out[index_to_position(out_index, out_strides)] = fn(
-                out[index_to_position(out_index, out_strides)], a_storage[i]
-            )
 
     return _reduce
 
