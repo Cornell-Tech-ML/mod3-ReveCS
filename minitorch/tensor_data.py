@@ -73,8 +73,6 @@ def to_index(ordinal: int, shape: Shape, out_index: OutIndex) -> None:
     for i in range(len(shape) - 1, -1, -1):
         sh = shape[i]
         out_index[i] = int(curr_ord % shape[i])
-        #out_index[i] = (ordinal % shape[i])
-        #ordinal //= shape[i]
         curr_ord = curr_ord // sh
 
 
@@ -130,7 +128,6 @@ def broadcast_index(
             out_index[i] = big_index[i + (len(big_shape) - len(shape))]
         else:
             out_index[i] = 0
-    # raise NotImplementedError("Need to implement for Task 2.2")
 
 
 def shape_broadcast(shape1: UserShape, shape2: UserShape) -> UserShape:
@@ -151,7 +148,7 @@ def shape_broadcast(shape1: UserShape, shape2: UserShape) -> UserShape:
 
     """
     # TODO: Implement for Task 2.2.
-    shape1 = list(shape1)
+    """shape1 = list(shape1)
     shape2 = list(shape2)
 
     while len(shape1) < len(shape2):
@@ -170,7 +167,24 @@ def shape_broadcast(shape1: UserShape, shape2: UserShape) -> UserShape:
         else:
             raise IndexingError(f"Cannot broadcast shapes {shape1} and {shape2}.")
 
-    return tuple(new_shape)
+    return tuple(new_shape)"""
+    a, b = shape1, shape2
+    m = max(len(a), len(b))
+    c_rev = [0] * m
+    a_rev = list(reversed(a))
+    b_rev = list(reversed(b))
+    for i in range(m):
+        if i >= len(a):
+            c_rev[i] = b_rev[i]
+        elif i >= len(b):
+            c_rev[i] = a_rev[i]
+        else:
+            c_rev[i] = max(a_rev[i], b_rev[i])
+            if a_rev[i] != c_rev[i] and a_rev[i] != 1:
+                raise IndexingError(f"Broadcast failure {a} {b}")
+            if b_rev[i] != c_rev[i] and b_rev[i] != 1:
+                raise IndexingError(f"Broadcast failure {a} {b}")
+    return tuple(reversed(c_rev))
 
 
 def strides_from_shape(shape: UserShape) -> UserStrides:
