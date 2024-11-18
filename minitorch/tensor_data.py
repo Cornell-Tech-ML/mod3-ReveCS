@@ -47,7 +47,7 @@ def index_to_position(index: Index, strides: Strides) -> int:
 
     """
     # TODO: Implement for Task 2.1.
-    #position = sum(i * s for i, s in zip(index, strides))
+    # position = sum(i * s for i, s in zip(index, strides))
     position = 0
     for ind, stride in zip(index, strides):
         position += ind * stride
@@ -122,7 +122,7 @@ def broadcast_index(
             raise IndexingError(
                 f"Cannot broadcast index {big_index} from shape {big_shape} to {shape}."
             )"""
-    
+
     for i, s in enumerate(shape):
         if s > 1:
             out_index[i] = big_index[i + (len(big_shape) - len(shape))]

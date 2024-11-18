@@ -7,7 +7,6 @@ from numba import prange
 from numba import njit as _njit
 
 from .tensor_data import (
-    MAX_DIMS,
     broadcast_index,
     index_to_position,
     shape_broadcast,
@@ -19,7 +18,7 @@ if TYPE_CHECKING:
     from typing import Callable, Optional
 
     from .tensor import Tensor
-    from .tensor_data import Index, Shape, Storage, Strides
+    from .tensor_data import Shape, Storage, Strides
 
 # TIP: Use `NUMBA_DISABLE_JIT=1 pytest tests/ -m task3_1` to run these tests without JIT.
 
@@ -30,6 +29,18 @@ Fn = TypeVar("Fn")
 
 
 def njit(fn: Fn, **kwargs: Any) -> Fn:
+    """JIT compiles a function using Numba's njit decorator.
+
+    Args:
+    ----
+        fn (Callable): The function to be JIT compiled.
+        **kwargs (Any): Additional keyword arguments to be passed to Numba's njit decorator.
+
+    Returns:
+    -------
+        Callable: The JIT compiled function.
+
+    """
     return _njit(inline="always", **kwargs)(fn)  # type: ignore
 
 
@@ -169,11 +180,13 @@ def tensor_map(
         in_strides: Strides,
     ) -> None:
         size = int(np.prod(out_shape))
-        
-        if (len(out_strides) == len(in_strides) and 
-            len(out_shape) == len(in_shape) and
-            np.array_equal(out_shape, in_shape) and
-            np.array_equal(out_strides, in_strides)):
+
+        if (
+            len(out_strides) == len(in_strides)
+            and len(out_shape) == len(in_shape)
+            and np.array_equal(out_shape, in_shape)
+            and np.array_equal(out_strides, in_strides)
+        ):
             for i in prange(size):
                 out[i] = fn(in_storage[i])
         else:
@@ -183,7 +196,9 @@ def tensor_map(
                 to_index(i, out_shape, out_index)
                 broadcast_index(out_index, out_shape, in_shape, in_index)
 
-                out[index_to_position(out_index, out_strides)] = fn(in_storage[index_to_position(in_index, in_strides)])
+                out[index_to_position(out_index, out_strides)] = fn(
+                    in_storage[index_to_position(in_index, in_strides)]
+                )
 
     return njit(_map, parallel=True)  # type: ignore
 
@@ -223,13 +238,14 @@ def tensor_zip(
         b_strides: Strides,
     ) -> None:
         size = int(np.prod(out_shape))
-        
-        if (len(out_shape) == len(a_shape) == len(b_shape) and 
-            np.array_equal(out_shape, a_shape) and 
-            np.array_equal(a_shape, b_shape) and
-            np.array_equal(out_strides, a_strides) and
-            np.array_equal(a_strides, b_strides)
-            ):
+
+        if (
+            len(out_shape) == len(a_shape) == len(b_shape)
+            and np.array_equal(out_shape, a_shape)
+            and np.array_equal(a_shape, b_shape)
+            and np.array_equal(out_strides, a_strides)
+            and np.array_equal(a_strides, b_strides)
+        ):
             for i in prange(size):
                 out[i] = fn(a_storage[i], b_storage[i])
         else:
@@ -242,7 +258,10 @@ def tensor_zip(
                 broadcast_index(out_index, out_shape, a_shape, a_index)
                 broadcast_index(out_index, out_shape, b_shape, b_index)
 
-                out[index_to_position(out_index, out_strides)] = fn(a_storage[index_to_position(a_index, a_strides)], b_storage[index_to_position(b_index, b_strides)])
+                out[index_to_position(out_index, out_strides)] = fn(
+                    a_storage[index_to_position(a_index, a_strides)],
+                    b_storage[index_to_position(b_index, b_strides)],
+                )
 
     return njit(_zip, parallel=True)  # type: ignore
 
@@ -279,20 +298,20 @@ def tensor_reduce(
     ) -> None:
         size = int(np.prod(out_shape))
         reduce_size = a_shape[reduce_dim]
-        
+
         # Parallel over output positions
         for i in prange(size):
             out_index = np.zeros(len(out_shape), dtype=np.int32)
             a_index = np.zeros(len(a_shape), dtype=np.int32)
             to_index(i, out_shape, out_index)
-            
+
             # Copy output index to input index
             for j in range(len(out_index)):
                 a_index[j] = out_index[j]
-            
+
             # Handle reduced dimension
             out_pos = index_to_position(out_index, out_strides)
-            
+
             # Inner reduction loop
             for j in range(reduce_size):
                 a_index[reduce_dim] = j
@@ -352,15 +371,19 @@ def _tensor_matrix_multiply(
         batch = i // (out_shape[-2] * out_shape[-1])
         row = (i // out_shape[-1]) % out_shape[-2]
         col = i % out_shape[-1]
-        
+
         a_start = batch * a_batch_stride + row * a_strides[-2]
         b_start = batch * b_batch_stride + col * b_strides[-1]
-        
+
         total = 0.0
         for j in range(a_shape[-1]):
-            total += a_storage[a_start + j * a_strides[-1]] * b_storage[b_start + j * b_strides[-2]]
-        
+            total += (
+                a_storage[a_start + j * a_strides[-1]]
+                * b_storage[b_start + j * b_strides[-2]]
+            )
+
         out[i] = total
+
 
 tensor_matrix_multiply = njit(_tensor_matrix_multiply, parallel=True)
 assert tensor_matrix_multiply is not None
