@@ -419,7 +419,7 @@ def tensor_reduce(
 
 
 def _mm_practice(out: Storage, a: Storage, b: Storage, size: int) -> None:
-    """This is a practice square MM kernel to prepare for matmul.
+    """A practice square MM kernel to prepare for matmul.
 
     Given a storage `out` and two storage `a` and `b`. Where we know
     both are shape [size, size] with strides [size, 1].
@@ -452,7 +452,7 @@ def _mm_practice(out: Storage, a: Storage, b: Storage, size: int) -> None:
     BLOCK_DIM = 32
 
     a_cache = cuda.shared.array(BLOCK_DIM, numba.float64)
-    b_cache = cuda.shared.array(BLOCK_DIM, numbda.float64)
+    b_cache = cuda.shared.array(BLOCK_DIM, numba.float64)
 
     i = cuda.blockIdx.x
     j = cuda.blockIdx.y
