@@ -465,7 +465,7 @@ def _mm_practice(out: Storage, a: Storage, b: Storage, size: int) -> None:
     if i < size and j < size:
         total = 0.0
         for k in range(size):
-            total += a_cache[i, k] * b_cache[i, k]
+            total += a_cache[i, k] * b_cache[k, j]
         out[i * size + j] = total
 
 
