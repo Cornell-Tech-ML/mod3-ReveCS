@@ -451,8 +451,8 @@ def _mm_practice(out: Storage, a: Storage, b: Storage, size: int) -> None:
     """
     BLOCK_DIM = 32
 
-    a_cache = cuda.shared.array(BLOCK_DIM, numba.float64)
-    b_cache = cuda.shared.array(BLOCK_DIM, numba.float64)
+    a_cache = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
+    b_cache = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
 
     i = cuda.blockIdx.x
     j = cuda.blockIdx.y
