@@ -449,7 +449,7 @@ def _mm_practice(out: Storage, a: Storage, b: Storage, size: int) -> None:
         size (int): size of the square
 
     """
-    BLOCK_DIM = 32
+    """BLOCK_DIM = 32
 
     a_cache = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float32)
     b_cache = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float32)
@@ -460,12 +460,34 @@ def _mm_practice(out: Storage, a: Storage, b: Storage, size: int) -> None:
     if i < size and j < size:
         a_cache[i, j] = a[i * size + j]
         b_cache[i, j] = b[i * size + j]
-        cuda.syncthreads()
+        cuda.syncthreads()  
 
         total = 0.0
         for k in range(size):
             total += a_cache[i, k] * b_cache[k, j]
-        out[i * size + j] = total
+        out[i * size + j] = total"""
+
+    # TODO: Implement for Task 3.3.
+    cache_a = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
+    cache_b = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
+    row = cuda.threadIdx.x
+    col = cuda.threadIdx.y
+
+    # compute if thread is within bound of `out`
+    if row < size and col < size:
+        # convert 2d index in cache into 1d index in storage
+        idx = row * size + col
+        # copy data from storage to cache
+        cache_a[row, col] = a[idx]
+        cache_b[row, col] = b[idx]
+        cuda.syncthreads()  # wait for all threads to finish copying before calculations can proceed
+        acc = 0.0  # accumulator for matmul results.
+        # matmul over the shared dimension
+        for k in range(size):
+            acc += cache_a[row, k] * cache_b[k, col]
+        # write accumulator result to global memory.
+        # single global write per thread
+        out[idx] = acc
 
 jit_mm_practice = jit(_mm_practice)
 
