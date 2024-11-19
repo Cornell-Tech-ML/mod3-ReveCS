@@ -449,7 +449,7 @@ def _mm_practice(out: Storage, a: Storage, b: Storage, size: int) -> None:
         size (int): size of the square
 
     """
-    BLOCK_DIM = 32
+    """BLOCK_DIM = 32
 
     a_cache = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float32)
     b_cache = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float32)
@@ -465,7 +465,27 @@ def _mm_practice(out: Storage, a: Storage, b: Storage, size: int) -> None:
         total = 0.0
         for k in range(size):
             total += a_cache[i, k] * b_cache[k, j]
-        out[i * size + j] = total
+        out[i * size + j] = total"""
+
+    BLOCK_DIM = 32
+
+    a_shared = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float32)
+    b_shared = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float32)
+
+    x = cuda.threadIdx.x
+    y = cuda.threadIdx.y
+
+    if x < size and y < size:
+        # copy global into shared
+        a_shared[x, y] = a[size * x + y]
+        b_shared[x, y] = b[size * x + y]
+        cuda.syncthreads()
+
+        # mult and sum for mm
+        total = 0.0
+        for i in range(size):
+            total += a_shared[x, i] * b_shared[i, y]
+        out[size * x + y] = total
 
 jit_mm_practice = jit(_mm_practice)
 
