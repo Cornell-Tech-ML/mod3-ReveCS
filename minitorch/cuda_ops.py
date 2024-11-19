@@ -451,6 +451,23 @@ def _mm_practice(out: Storage, a: Storage, b: Storage, size: int) -> None:
     """
     BLOCK_DIM = 32
 
+    a_cache = cuda.shared.array(BLOCK_DIM, numba.float64)
+    b_cache = cuda.shared.array(BLOCK_DIM, numbda.float64)
+
+    i = cuda.blockIdx.x
+    j = cuda.blockIdx.y
+
+    if i < size and j < size:
+        a_cache[i, j] = a[i * size + j]
+        b_cache[i, j] = b[i * size + j]
+    cuda.syncthreads()
+
+    if i < size and j < size:
+        total = 0.0
+        for k in range(size):
+            total += a_cache[i, k] * b_cache[i, k]
+        out[i * size + j] = total
+
 
 jit_mm_practice = jit(_mm_practice)
 
