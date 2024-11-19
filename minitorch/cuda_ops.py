@@ -449,7 +449,7 @@ def _mm_practice(out: Storage, a: Storage, b: Storage, size: int) -> None:
         size (int): size of the square
 
     """
-    """BLOCK_DIM = 32
+    BLOCK_DIM = 32
 
     a_cache = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float32)
     b_cache = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float32)
@@ -465,29 +465,7 @@ def _mm_practice(out: Storage, a: Storage, b: Storage, size: int) -> None:
         total = 0.0
         for k in range(size):
             total += a_cache[i, k] * b_cache[k, j]
-        out[i * size + j] = total"""
-
-    # TODO: Implement for Task 3.3.
-    cache_a = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
-    cache_b = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
-    row = cuda.threadIdx.x
-    col = cuda.threadIdx.y
-
-    # compute if thread is within bound of `out`
-    if row < size and col < size:
-        # convert 2d index in cache into 1d index in storage
-        idx = row * size + col
-        # copy data from storage to cache
-        cache_a[row, col] = a[idx]
-        cache_b[row, col] = b[idx]
-        cuda.syncthreads()  # wait for all threads to finish copying before calculations can proceed
-        acc = 0.0  # accumulator for matmul results.
-        # matmul over the shared dimension
-        for k in range(size):
-            acc += cache_a[row, k] * cache_b[k, col]
-        # write accumulator result to global memory.
-        # single global write per thread
-        out[idx] = acc
+        out[i * size + j] = total
 
 jit_mm_practice = jit(_mm_practice)
 
@@ -554,16 +532,14 @@ def _tensor_matrix_multiply(
     #    a) Copy into shared memory for a matrix.
     #    b) Copy into shared memory for b matrix
     #    c) Compute the dot produce for position c[i, j]
-    # TODO: Implement for Task 3.4.
-    #raise NotImplementedError("Need to implement for Task 3.4")
     total = 0.0
     
     for block in range(0, a_shape[-1], BLOCK_DIM):
         if i < a_shape[-2] and block + pj < a_shape[-1]:
-            a_shared[pi, pj] = a_storage[a_batch_stride * batch + i * a_shape[-2] + (block + pj) * a_shape[-1]]
+            a_shared[pi, pj] = a_storage[a_batch_stride * batch + i * a_strides[-2] + (block + pj) * a_strides[-1]]
         
         if block + pi < b_shape[-2] and j < b_shape[-1]:
-            b_shared[pi, pj] = b_storage[b_batch_stride * batch + (block + pi) * b_shape[-2] + j * b_shape[-1]]
+            b_shared[pi, pj] = b_storage[b_batch_stride * batch + (block + pi) * b_strides[-2] + j * b_strides[-1]]
 
         cuda.syncthreads()
 
