@@ -451,7 +451,7 @@ def _mm_practice(out: Storage, a: Storage, b: Storage, size: int) -> None:
     """
     BLOCK_DIM = 32
 
-    a_cache = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
+    """a_cache = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
     b_cache = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
 
     i = cuda.blockIdx.x
@@ -466,7 +466,27 @@ def _mm_practice(out: Storage, a: Storage, b: Storage, size: int) -> None:
         total = 0.0
         for k in range(size):
             total += a_cache[i, k] * b_cache[k, j]
-        out[i * size + j] = total
+        out[i * size + j] = total"""
+    
+    BLOCK_DIM = 32
+
+    a_shared = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float32)
+    b_shared = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float32)
+
+    x = cuda.threadIdx.x
+    y = cuda.threadIdx.y
+
+    if x < size and y < size:
+        # copy global into shared
+        a_shared[x, y] = a[size * x + y]
+        b_shared[x, y] = b[size * x + y]
+        cuda.syncthreads()
+
+        # mult and sum for mm
+        accumulator = 0.0
+        for i in range(size):
+            accumulator += a_shared[x, i] * b_shared[i, y]
+        out[size * x + y] = accumulator
 
 
 jit_mm_practice = jit(_mm_practice)
@@ -535,7 +555,8 @@ def _tensor_matrix_multiply(
     #    b) Copy into shared memory for b matrix
     #    c) Compute the dot produce for position c[i, j]
     # TODO: Implement for Task 3.4.
-    raise NotImplementedError("Need to implement for Task 3.4")
+    #raise NotImplementedError("Need to implement for Task 3.4")
+    
 
 
 tensor_matrix_multiply = jit(_tensor_matrix_multiply)
