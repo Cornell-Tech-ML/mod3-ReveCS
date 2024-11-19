@@ -350,6 +350,7 @@ def sum_practice(a: Tensor) -> TensorData:
     Returns:
     -------
         TensorData: The result of the sum operation.
+
     """
     (size,) = a.shape
     threadsperblock = THREADS_PER_BLOCK
@@ -460,17 +461,38 @@ def _mm_practice(out: Storage, a: Storage, b: Storage, size: int) -> None:
     if i < size and j < size:
         a_cache[i, j] = a[i * size + j]
         b_cache[i, j] = b[i * size + j]
-        cuda.syncthreads()  
+        cuda.syncthreads()
 
         total = 0.0
         for k in range(size):
             total += a_cache[i, k] * b_cache[k, j]
         out[i * size + j] = total
 
+
 jit_mm_practice = jit(_mm_practice)
 
 
 def mm_practice(a: Tensor, b: Tensor) -> TensorData:
+    """Performs a matrix multiplication between two tensors `a` and `b` using CUDA.
+
+    The matrix multiplication is performed as follows:
+    ```
+    for i:
+        for j:
+            for k:
+                out[i, j] += a[i, k] * b[k, j]
+    ```
+
+    Args:
+    ----
+        a (Tensor): The first tensor to multiply.
+        b (Tensor): The second tensor to multiply.
+
+    Returns:
+    -------
+        TensorData: The result of the matrix multiplication as a TensorData object.
+
+    """
     (size, _) = a.shape
     threadsperblock = (THREADS_PER_BLOCK, THREADS_PER_BLOCK)
     blockspergrid = 1
@@ -533,24 +555,32 @@ def _tensor_matrix_multiply(
     #    b) Copy into shared memory for b matrix
     #    c) Compute the dot produce for position c[i, j]
     total = 0.0
-    
+
     for block in range(0, a_shape[-1], BLOCK_DIM):
         if i < a_shape[-2] and block + pj < a_shape[-1]:
-            a_shared[pi, pj] = a_storage[a_batch_stride * batch + i * a_strides[-2] + (block + pj) * a_strides[-1]]
-        
+            a_shared[pi, pj] = a_storage[
+                a_batch_stride * batch
+                + i * a_strides[-2]
+                + (block + pj) * a_strides[-1]
+            ]
+
         if block + pi < b_shape[-2] and j < b_shape[-1]:
-            b_shared[pi, pj] = b_storage[b_batch_stride * batch + (block + pi) * b_strides[-2] + j * b_strides[-1]]
+            b_shared[pi, pj] = b_storage[
+                b_batch_stride * batch
+                + (block + pi) * b_strides[-2]
+                + j * b_strides[-1]
+            ]
 
         cuda.syncthreads()
 
         for k in range(BLOCK_DIM):
             if (block + k) < a_shape[-1]:
                 total += a_shared[pi, k] * b_shared[k, pj]
-            
+
         cuda.syncthreads()
-    
+
     if i < out_shape[-2] and j < out_shape[-1]:
-        out[batch * out_strides[0] + i * out_strides[-2] + j * out_strides[-1]] += total    
+        out[batch * out_strides[0] + i * out_strides[-2] + j * out_strides[-1]] += total
 
 
 tensor_matrix_multiply = jit(_tensor_matrix_multiply)
