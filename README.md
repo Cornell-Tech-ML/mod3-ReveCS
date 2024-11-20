@@ -30,3 +30,21 @@ python sync_previous_module.py previous-module-dir current-module-dir
 The files that will be synced are:
 
         minitorch/tensor_data.py minitorch/tensor_functions.py minitorch/tensor_ops.py minitorch/operators.py minitorch/scalar.py minitorch/scalar_functions.py minitorch/module.py minitorch/autodiff.py minitorch/module.py project/run_manual.py project/run_scalar.py project/run_tensor.py minitorch/operators.py minitorch/module.py minitorch/autodiff.py minitorch/tensor.py minitorch/datasets.py minitorch/testing.py minitorch/optim.py
+
+# Simple
+![alt text](<images/Simple CPU Command.png>)
+<img src="images/Simple CPU Logs.png" width="50%">
+![alt text](<images/Simple GPU Command.png>)
+<img src="images/Simple GPU Logs.png" width="50%">
+
+# Split
+![alt text](<images/Split CPU Command.png>)
+<img src="images/Split CPU Logs.png" width="50%">
+![alt text](<images/Split GPU Command.png>)
+<img src="images/Split GPU Logs.png" width="50%">
+
+# XOR
+![alt text](<images/XOR CPU Command.png>)
+<img src="images/XOR CPU Logs.png" width="50%">
+![alt text](<images/XOR GPU Command.png>)
+<img src="images/XOR GPU Logs.png" width="50%">
