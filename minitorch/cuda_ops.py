@@ -558,16 +558,18 @@ def _tensor_matrix_multiply(
 
     # Iterate across the shared dimension by block dim
     for block in range(0, a_shape[-1], BLOCK_DIM):
-        # Copy into shared memory for a matrix
+        # Check if thread is within bounds
         if i < a_shape[-2] and block + pj < a_shape[-1]:
+            # Copy into shared memory for a matrix
             a_shared[pi, pj] = a_storage[
                 a_batch_stride * batch
                 + i * a_strides[-2]
                 + (block + pj) * a_strides[-1]
             ]
 
-        # Copy into shared memory for b matrix
+        # Check if thread is within bounds
         if block + pi < b_shape[-2] and j < b_shape[-1]:
+            # Copy into shared memory for b matrix
             b_shared[pi, pj] = b_storage[
                 b_batch_stride * batch
                 + (block + pi) * b_strides[-2]
@@ -577,16 +579,19 @@ def _tensor_matrix_multiply(
         # Wait for all threads to finish loops
         cuda.syncthreads()
 
-        # Compute partial dot product for this block
+        # Iterate through current block
         for k in range(BLOCK_DIM):
+            # Check if within matrix bounds
             if (block + k) < a_shape[-1]:
+                # Compute partial dot product
                 total += a_shared[pi, k] * b_shared[k, pj]
 
         # Wait for all threads to finish loops
         cuda.syncthreads()
 
-    # Write final result to global memory if within output matrix bounds
+    # Check if thread is within output matrix bounds
     if i < out_shape[-2] and j < out_shape[-1]:
+        # Write final result to global memory 
         out[batch * out_strides[0] + i * out_strides[-2] + j * out_strides[-1]] += total
 
 
