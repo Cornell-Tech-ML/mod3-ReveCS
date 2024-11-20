@@ -48,3 +48,9 @@ The files that will be synced are:
 <img src="images/XOR CPU Logs.png" width="50%">
 ![alt text](<images/XOR GPU Command.png>)
 <img src="images/XOR GPU Logs.png" width="50%">
+
+# Bigger Model (Simple)
+![alt text](<images/Simple CPU Bigger Command.png>)
+<img src="images/Simple CPU Bigger Logs.png" width="50%">
+![alt text](<images/Simple GPU Bigger Command.png>)
+<img src="images/Simple GPU Bigger Logs.png" width="50%">
