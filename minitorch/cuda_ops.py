@@ -591,7 +591,7 @@ def _tensor_matrix_multiply(
 
     # Check if thread is within output matrix bounds
     if i < out_shape[-2] and j < out_shape[-1]:
-        # Write final result to global memory 
+        # Write final result to global memory
         out[batch * out_strides[0] + i * out_strides[-2] + j * out_strides[-1]] += total
 
 

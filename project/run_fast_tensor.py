@@ -48,6 +48,7 @@ class Linear(minitorch.Module):
     def forward(self, x):
         return (x @ self.weights.value) + self.bias.value
 
+
 class FastTrain:
     def __init__(self, hidden_layers, backend=FastTensorBackend):
         self.hidden_layers = hidden_layers
@@ -107,6 +108,7 @@ class FastTrain:
         total_time = time.time() - start_time
         print(f"\nTraining completed in {total_time:.2f} seconds")
         print(f"Average epoch time: {sum(times)/len(times):.4f} seconds")
+
 
 if __name__ == "__main__":
     import argparse

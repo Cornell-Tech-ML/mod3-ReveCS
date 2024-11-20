@@ -5,11 +5,13 @@ Be sure you have minitorch installed in you Virtual Env.
 
 import minitorch
 
+
 # Use this function to make a random parameter in
 # your module.
 def RParam(*shape):
     r = 2 * (minitorch.rand(shape) - 0.5)
     return minitorch.Parameter(r)
+
 
 # TODO: Implement for Task 2.5.
 class Network(minitorch.Module):
@@ -19,11 +21,11 @@ class Network(minitorch.Module):
         self.layer2 = Linear(hidden_layers, hidden_layers)
         self.layer3 = Linear(hidden_layers, 1)
 
-
     def forward(self, x):
         second = self.layer1.forward(x).relu()
         third = self.layer2.forward(second).relu()
         return self.layer3.forward(third).sigmoid()
+
 
 class Linear(minitorch.Module):
     def __init__(self, in_size, out_size):
@@ -31,7 +33,6 @@ class Linear(minitorch.Module):
         self.weights = RParam(in_size, out_size)
         self.bias = RParam(out_size)
         self.out_size = out_size
-
 
     def forward(self, inputs):
         num_elems, in_size = inputs.shape
