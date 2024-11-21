@@ -4,6 +4,8 @@ import numba
 
 import minitorch
 
+import time
+
 datasets = minitorch.datasets
 FastTensorBackend = minitorch.TensorBackend(minitorch.FastOps)
 if numba.cuda.is_available():
@@ -29,8 +31,9 @@ class Network(minitorch.Module):
         self.layer3 = Linear(hidden, 1, backend)
 
     def forward(self, x):
-        # TODO: Implement for Task 3.5.
-        raise NotImplementedError("Need to implement for Task 3.5")
+        second = self.layer1.forward(x).relu()
+        third = self.layer2.forward(second).relu()
+        return self.layer3.forward(third).sigmoid()
 
 
 class Linear(minitorch.Module):
@@ -43,8 +46,7 @@ class Linear(minitorch.Module):
         self.out_size = out_size
 
     def forward(self, x):
-        # TODO: Implement for Task 3.5.
-        raise NotImplementedError("Need to implement for Task 3.5")
+        return (x @ self.weights.value) + self.bias.value
 
 
 class FastTrain:
@@ -64,8 +66,11 @@ class FastTrain:
         optim = minitorch.SGD(self.model.parameters(), learning_rate)
         BATCH = 10
         losses = []
+        times = []  # Track time per epoch
+        start_time = time.time()  # Start total timing
 
         for epoch in range(max_epochs):
+            epoch_start = time.time()  # Start epoch timing
             total_loss = 0.0
             c = list(zip(data.X, data.y))
             random.shuffle(c)
@@ -88,6 +93,8 @@ class FastTrain:
                 optim.step()
 
             losses.append(total_loss)
+            epoch_time = time.time() - epoch_start
+            times.append(epoch_time)
             # Logging
             if epoch % 10 == 0 or epoch == max_epochs:
                 X = minitorch.tensor(data.X, backend=self.backend)
@@ -96,6 +103,11 @@ class FastTrain:
                 y2 = minitorch.tensor(data.y)
                 correct = int(((out.detach() > 0.5) == y2).sum()[0])
                 log_fn(epoch, total_loss, correct, losses)
+                print(f"Epoch time: {epoch_time:.4f} seconds")
+
+        total_time = time.time() - start_time
+        print(f"\nTraining completed in {total_time:.2f} seconds")
+        print(f"Average epoch time: {sum(times)/len(times):.4f} seconds")
 
 
 if __name__ == "__main__":
@@ -116,7 +128,7 @@ if __name__ == "__main__":
     if args.DATASET == "xor":
         data = minitorch.datasets["Xor"](PTS)
     elif args.DATASET == "simple":
-        data = minitorch.datasets["Simple"].simple(PTS)
+        data = minitorch.datasets["Simple"](PTS)
     elif args.DATASET == "split":
         data = minitorch.datasets["Split"](PTS)
 
