@@ -334,7 +334,7 @@ def _sum_practice(out: Storage, a: Storage, size: int) -> None:
         stride //= 2
 
     if pos == 0:
-        out[pos] = cache[0]
+        out[cuda.blockId.x] = cache[0]
 
 
 jit_sum_practice = cuda.jit()(_sum_practice)
